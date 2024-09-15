@@ -1,19 +1,14 @@
-# ESPmeter
+# I2C-Gas-Meter
 
-ESPmeter helps monitoring domestic gas consumption; a small device captures 
-data from the gas meter which is then sent to a server via HTTP; a web 
-application allows visualizing daily gas consumption with a granularity up to 
-5 minutes.
-
-![Hourly aggregation](docs/pics/aggr_hour.png)
-
-![Daily aggregation](docs/pics/aggr_day.png)
+I2C-Gas-Meter enables you to monitor your domestic gas consumption; a small attiny captures 
+data from the gas meter which is then read by ESPHome. This project builds on the ESPmeter
+project from francescovannini (https://github.com/francescovannini/espmeter)
 
 ## Operating principle
 
 For this device to work, we need a type of mechanical gas meter having a magnet 
-installed on one of the digits of its counter. A probe equipped with a Hall 
-effect sensor is placed near or on top of the counter; the digit revolves when 
+installed on one of the digits of its counter. A probe equipped with a reed switch
+is placed near or on top of the counter; the digit revolves when 
 the gas flows and so does the magnet which becomes periodicaly detectable by 
 the sensor. Keeping track of revolutions over time allows to calculate the 
 amount of gas consumed during a certain period. 
@@ -46,12 +41,8 @@ at regular intervals and then once per day would transmit data via Wi-Fi.
 
 ## Sampling frequency
 
-Because we are using an Hall effect sensor and not a Reed switch, to be sure
-the Tiny13 doesn't miss a pulse, the sensor has to be read often enough.
-
 In my particular configuration, the digit carrying the magnet completes a 
-revolution in less than 15 seconds (when I'm using both heater and kitchen stove
- at maximum power).
+revolution in over a minute.
 
 During this interval, the magnet is detectable by the sensor for about 1.5
 seconds while being close enough to the sensor. 

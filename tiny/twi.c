@@ -1,14 +1,14 @@
 #include "twi.h"
 
 /* Initialize TWI slave mode */
-void twi_slave_init(void) {
+void twi_slave_init( ) {
     SET_SDA();
     TWI_INT_INIT();
     TWSR = I2C_IDLE;
 }
 
 /* Enable twi slave */
-void twi_slave_enable(void) {
+void twi_slave_enable( ) {
     TWI_INT_CLEAR_FLAG();
     TWI_INT_ENABLE();
 }

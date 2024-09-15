@@ -2,7 +2,6 @@
 #define __TWI_H
 
 #include <avr/io.h>
-#include <avr/interrupt.h>
 
 /* SDA pin definition */
 #define SDA PB1
@@ -30,12 +29,12 @@
 #define TWI_INT_CLEAR_FLAG()    (GIFR = (1 << PCIF))
 
 // Dedicated general purpose registers.
-register uint8_t TWSR asm("r2");
-register uint8_t TWDR asm("r3");
+uint8_t TWSR;
+uint8_t TWDR;
 
-#define I2C_BUFFER_SIZE     39
+#define I2C_BUFFER_SIZE     45
 volatile uint8_t i2c_buffer[I2C_BUFFER_SIZE];
-volatile register uint8_t i2c_buffer_idx asm("r4");
+volatile uint8_t i2c_buffer_idx;
 
 /* TWI state machine macros */
 # define TWI_SLA_REQ_W_ACK_RTD              0x60
@@ -48,7 +47,6 @@ volatile register uint8_t i2c_buffer_idx asm("r4");
 # define I2C_IDLE                           0x00
 
 uint8_t read_byte(void);
-void twi_slave_init(void);
 void twi_slave_enable(void);
 void send_data(void);
 void get_start_condition(void);

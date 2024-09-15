@@ -2,33 +2,20 @@
 #include <avr/sleep.h>
 #include <util/delay.h>
 #include "main.h"
-#include "twi.h"
-
-_Static_assert(sizeof(pulse_log_t) == I2C_BUFFER_SIZE, "pulse_log_t size must be equal to I2C_BUFFER_SIZE");
+#include "twi.c"
 
 extern volatile uint8_t i2c_buffer[];
 volatile uint8_t flags;
 
-void readVccVoltage(uint8_t *vcc)
-{
-
-    // VCC as reference voltage
-    ADMUX &= ~(1 << REFS0);
-
-    // VCC compared with PB2, result is left adjusted
-    ADMUX |= (1 << MUX0) | (1 << ADLAR);
-
-    // Prescaler to /64 and ADC enabled
-    ADCSRA |= (1 << ADPS2) | (1 << ADPS1) | (1 << ADEN);
-
-    // Begin single conversion
-    ADCSRA |= (1 << ADSC);
+void readVccVoltage(uint16_t *vcc) {
+    ADMUX = 0b1000001; 
+    ADCSRA = 0b11000110;
 
     // Wait until conversion is done
     while (ADCSRA & (1 << ADSC));
 
     // 8-bit precision, left adjusted result, one read
-    *vcc = ADCH;
+    *vcc = ADCH<<8 | ADCL;
 
     // Disable ADC
     ADCSRA &= ~(1 << ADEN);
@@ -80,7 +67,7 @@ int main(void)
         // Woke up after 1 second
         pulse_log->ticks++;
 
-        frame = (pulse_log->ticks + (LOG_FRAME_MINUTES * 60) - 1) / (LOG_FRAME_MINUTES * 60) - 1;
+        frame = (pulse_log->ticks + (LOG_FRAME_SECONDS * 60) - 1) / LOG_FRAME_SECONDS - 1;
         if (frame >= LOG_FRAMES)
         {
             frame = LOG_FRAMES - 1;
@@ -111,7 +98,7 @@ int main(void)
         cbi(CONTROL_PORT, SENSOR_VCC_PIN);
 
         // Samples VCC 5 minutes before timeout
-        if (pulse_log->ticks == LOG_HOURS * 60 * 55)
+        if (pulse_log->ticks == LOG_MINUTES * 50)
         {
             readVccVoltage(&pulse_log->vcc);
         }
