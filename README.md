@@ -16,7 +16,7 @@ While this project has been designed with gas meters in mind, it could
 theoretically work with other meters, such as water meters, as long as they 
 have a detectable magnet moving along one of the indicators.
 
-![Battery compartment on top and electronics on the bottom](docs/pics/boxed.jpg)
+![Battery compartment on top and electronics on the bottom](docs/pics/box.jpg)
 
 ## Design
 
@@ -37,7 +37,8 @@ recording part. The Tiny13 has a very low power consumption and can stay
 asleep for most of the time. The ESP would then communicate with the Tiny13 
 at regular intervals and then once per day would transmit data via Wi-Fi.
 
-![The guts](docs/pics/top.jpg)
+![The guts](docs/pics/gas-meter-breadboard.png)
+![The real guts](docs/pics/top-inner.jpg)
 
 ## Sampling frequency
 
@@ -58,7 +59,7 @@ adjust this parameter in the code.
 
 ## Hardware
 
-![Schematics](docs/pics/schematics.png)
+![Schematics](docs/pics/gas-meter-circuit.png)
 
 ### Parts
 
@@ -83,10 +84,6 @@ adjust this parameter in the code.
 
 In my build, the reed switch is a pre build model that would also work for homematic IP.
 The main benefit is that this module comes with adapters that make it fit perfect into the gas meter.
-
-![Finished probe](docs/pics/hall.jpg)
-
-![Probe in the meter](docs/pics/meter.jpg)
 
 ## Software on Tiny13 side:
 
