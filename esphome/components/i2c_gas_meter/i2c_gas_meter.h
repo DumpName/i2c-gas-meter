@@ -6,7 +6,7 @@
 #include <esphome/components/sensor/sensor.h>
 
 namespace esphome {
-namespace i2cgasmeter {
+namespace i2c_gas_meter {
 
 
 class I2CGasMeterComponent : public sensor::Sensor, public PollingComponent, public i2c::I2CDevice{

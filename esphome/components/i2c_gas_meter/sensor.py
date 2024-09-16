@@ -23,8 +23,8 @@ AUTO_LOAD = [ "sensor" ]
 
 DEPENDENCIES = ["i2c"]
 
-i2cgasmeter_ns = cg.esphome_ns.namespace( "i2cgasmeter" )
-I2CGasMeterComponent = i2cgasmeter_ns.class_( 
+i2c_gas_meter_ns = cg.esphome_ns.namespace( "i2c_gas_meter" )
+I2CGasMeterComponent = i2c_gas_meter_ns.class_(
     "I2CGasMeterComponent", cg.PollingComponent, i2c.I2CDevice
 )
 
@@ -57,7 +57,7 @@ CONFIG_SCHEMA = (
         }
     )
     .extend( i2c.i2c_device_schema(0x5D))
-    .extend( cv.polling_component_schema("30m"))
+    .extend( cv.polling_component_schema("30min"))
 )
 
 

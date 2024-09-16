@@ -1,7 +1,7 @@
 #include <cmath>
 #include <cstdint>
 
-#include "I2CGasMeter.h"
+#include "i2c_gas_meter.h"
 #include "esphome/components/i2c/i2c.h"
 #include "esphome/core/hal.h"
 #include "esphome/core/log.h"
@@ -12,9 +12,9 @@ static const uint8_t GAS_METER_REGISTER_CHIPID = 0xD0;
 
 
 namespace esphome {
-namespace i2cgasmeter {
+namespace i2c_gas_meter {
 
-static const char *TAG = "i2cgasmeter";
+static const char *TAG = "i2c_gas_meter";
 
 void I2CGasMeterComponent::setup( ) {
     ESP_LOGCONFIG(TAG, "Setting up I2CGasMeter...");
