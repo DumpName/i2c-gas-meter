@@ -1,8 +1,8 @@
 # I2C-Gas-Meter
 
 I2C-Gas-Meter enables you to monitor your domestic gas consumption; a small attiny captures 
-data from the gas meter which is then read by ESPHome. This project builds on the ESPmeter
-project from francescovannini (https://github.com/francescovannini/espmeter)
+data from the gas meter which is then read by ESPHome. This project builds on the [ESPmeter
+project from francescovannini](https://github.com/francescovannini/espmeter)
 
 ## Operating principle
 
@@ -63,54 +63,46 @@ adjust this parameter in the code.
 ### Parts
 
 * ATTiny13-20PU
-* ESP-12F module
-* MCP1702-3302ET low quiescent LDO regulator
-* AH276 Hall effect sensor
+* ESP8266 (D1 mini)
+* H7333-A LDO regulator
+* ELV ES-GAS2
 * 10kΩ resistors (5x)
-* 3.9MΩ resistors (2x) (see below)
+* 10MΩ resistor (see below)
+* 3.3MΩ resistor (see below)
 * 10μF 10V capacitor
 * perfboard
-* 3 pin header (optional)
-* 3 AA battery holder
+* rj11 adapter 
+* 6 pin header (optional)
+* 4 pin header (2x optional)
+* 3 18650 battery holder
+* 3S BMS
 * plastic enclosure
 * 3 lead wire
 
 ### The probe
 
-In my build, the Hall effect sensor has been salvaged from a common 12V PC fan. 
-Maybe similar sensors can be used, but I've found this one to be quite reliable
-in sensing the small magnet inside the meter. It is also drawing a very small 
-amount of power and working well at 3.3V and below.
+In my build, the reed switch is a pre build model that would also work for homematic IP.
+The main benefit is that this module comes with adapters that make it fit perfect into the gas meter.
 
 ![Finished probe](docs/pics/hall.jpg)
-
-I've mounted the sensor on a small strip of perfboard, then soldered a decently 
-looking wire so that the whole probe can be easily placed in the slot on top of 
-the meter drums. I have embedded the probe into hot glue, then properly trimmed 
-it to give it some sort of semi-professional look and providing good insulation
-from humidity.
-
-Below you can see the finished probe installed on my meter, temporarily hold in 
-place with some paper. Note the small shiny magnet glued on top of the number 6 
-in the last drum.
 
 ![Probe in the meter](docs/pics/meter.jpg)
 
 ## Software on Tiny13 side:
 
-Code is written in C and compiled via 
+The original code is written in C and compiled via 
 [avr-gcc](https://gcc.gnu.org/wiki/avr-gcc)
+I adapted the project so that you can compile and upload the code via the arduino IDE
 
 Most of time, the ATTiny is in sleep state. Internal timer is used to wake up
-regularly, power the Hall effect sensor through one of the ATTiny pins and read
-its output. The Tiny stores 3 hours of pulse counting in its own memory and 
-it also regularly samples battery voltage every 3 hours. 
+regularly check the reed switch output and check the current voltage of the batteries.
+The Tiny stores 3 hours of pulse counting in its own memory. 
 
 Communication with ESP is achieved via a simplified implementation of the I2C
 protocol, derived from "AVR311: Using the TWI Module as I2C Slave" Atmel 
 application note available [here](http://ww1.microchip.com/downloads/en/AppNotes/atmel-2565-using-the-twi-module-as-i2c-slave_applicationnote_avr311.pdf)
 
-Battery voltage is fed through a voltage divider and compared with the 3.3V 
+Battery pack voltage is fed through a voltage divider and compared with the 3.3V 
 provided by the voltage regulator via the ADC. This is not very accurate but
 it should be good enough to roughly estimate battery discharge rate. 
 
@@ -145,13 +137,14 @@ High: 0xFF
 The Tiny13 ADC is used to monitor batteries voltage so the user can be alerted
 when they need to be replaced. The Tiny13 ADC is a 10-bits ADC configured to
 compare the Tiny13 VCC with pin PB2, which is fed the unregulated battery 
-voltage through a voltage divider made with two resistors of nominally equal 
-value. In the schematics, these resistors are 3.9MΩ but they can be replaced
-with other values, as long as they are the same. A high value will limit the 
+voltage through a voltage divider. The voltage divider is build to break the
+12.6V max pack voltage into a voltage that can be measured by the attiny.
+In the schematics, these resistors are 10MΩ and 3.3MΩ but they can be replaced
+with other values, as long as the "middle voltage" is around 3V. A high value will limit the 
 current drain and this can be usful to prolong battery life. 
 
-The ADC is a 10-bits but only 8 are used here and because the two resistors 
-forming the voltage divider are unlikely to be identical, it's advisable to
+The ADC is a 10-bits which is extended to 16 bit here. Because the two resistors 
+forming the voltage divider are unlikely to be exactly of the given resistance, it's advisable to
 run a series of simple measurements to tune the Tiny13 reading.
 
 With a variable voltage supply and a multimeter we sampled different VCC 
@@ -167,68 +160,10 @@ define("VCC_ADJ", 3.3 / 255 * 1.8);
 
 ## Software on ESP8266 side:
 
-[NodeMCU](http://www.nodemcu.com/) firmware powers the ESP8266 side. 
-The ESPmeter code is written in [Lua](http://www.lua.org/).
-
-ESP8266 could theoretically stay alseep for 3 consecutive hours, however due to 
-the ESP wake-up counter implementation, it's impossible to sleep longer than 
-about 71 minutes (4294967295us). The ESP therefore sleeps 1 hour, and when 
-it wakes up, depending on the hour, it either:
-
-* 3, 6, 9, 12, 15, 18, 21: retrieves data from Tiny13 and stores it in its RTC
-* 0: retrieves data from Tiny13, sends the whole RTC memory dump to server 
-and performs clock syncronization using the response from server
-* rest: goes back to sleep immediately for another hour
+[ESPHome](https://esphome.io/) firmware powers the ESP8266 side.
+This project contains the custom external component for the reading of the attiny.
 
 After sending content to ESP, the Tiny13 clears its own memory and a new 3
 hours log is initialized.
 
-ESP8266 RTC memory is configured as a 32-bit integer array. The 40 bytes struct
-dumped from the Tiny13 is converted into a 10 elements array of 32-bits 
-wide integers and stored into the RTC memory. RTC memory survives deep sleep 
-cycles while the normal RAM does not so this makes it ideal for the job.
-
-Here the RTC memory map (unit: 32bit array)
-
-    [00 - 09]:  Used by rtctime library to store RTC calibration data
-    [10 - 10]:  Clock calibration counter (+ checksum)
-    [11 - 91]:  8 slots, 10 elements each, every element is 4 bytes
-                every slot corresponds to a Tiny13 memory dump (40 bytes). 
-                Checksum is performed on the Tiny13 and checked on the ESP 
-                before sending the slot content to the server
-
-You would need to build a NodeMCU firmware from https://nodemcu-build.com/ 
-enabling the following modules:
-
-* bit
-* encoder
-* file
-* http
-* i2c 
-* net 
-* node
-* rtcmem
-* rtctime
-* sjson
-* sntp
-* struct
-* tmr
-* uart
-* wifi
-* tls
-
-## Collecting and displaying the data
-
-Every day at midnight, the ESP will dump the data collected during the day to
-a remote server via HTTP POST, uploading a JSON file. A PHP script would then
-parse such file and insert the data in a SQL table. Another simple script 
-would query the data and present it to [Plotly](https://plotly.com/) which would
-display it as a time series. I decided to keep this part of the project very 
-simple as it not particularly interesting to me; I would maybe re-do it in the
-future using maybe a better approach, maybe using something like 
-[Prometheus](prometheus.io).
-
-## As seen on Hackaday
-
-This project has been featured on [Hackaday Newsletter](https://hackaday.com/2021/02/06/the-right-tools-for-the-job/)
 
